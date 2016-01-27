@@ -17,23 +17,29 @@ def conver_file(file_name):
             caption = row[0]
         elif i == 2:
             headings = [h.split('(')[0].strip() for h in row]
-            units = re.findall("\(([%\w]*)\)", ' '.join(row))
+            if verbose:
+                print "Headings:", headings
+        elif i == 3:
+            units = [u.strip(" ()") for u in row]
             if verbose:
                 print "Units:", units
-                print "Headings:", headings
+            if row[1] != '':
+                headings[1] += ' ' + row[1]
         else:
             if row[0] <> '':
                 chemical_formula = row[0]
+
 
             alloy = Alloy(
                 ids = chemical_formula, 
                 chemical_formula = chemical_formula) 
 
             properties = []
-            for k in range(1,4):
+            method = Method(name=row[1])
+            for k in range(2,4):
                 prop = Property(name=headings[k])
                 prop.scalars = row[k]
-                prop.units = units[k-1]
+                prop.method = method
                 properties.append(prop)
 
             alloy.properties = properties
@@ -46,3 +52,4 @@ def conver_file(file_name):
 
 for fn in ifiles():
     conver_file(fn)
+
