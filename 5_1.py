@@ -15,6 +15,8 @@ if len(sys.argv) < 2:
 else:
     root_dir = sys.argv[1]
 
+verbose = ('-V' in sys.argv)
+
 def irows(file_name):
     """
     Iterates file rows
@@ -34,12 +36,13 @@ def irows(file_name):
 def conver_file(file_name):
     data = []
     headings = []
-    phases = []
+    alloys = []
     name, ext = os.path.splitext(file_name)
     output_name = name + ".p"
 
     for i, row in enumerate(irows(file_name)):
-        print i, ":", row
+        if verbose:
+            print i, ":", row
         if i == 0:
             table_no = row[0].lower().replace('table','').replace(' ','')
         elif i == 1:
@@ -47,9 +50,11 @@ def conver_file(file_name):
         elif i == 2:
             #for j, column in enumerate(row):
             #    headings.append(row[j])
-            headings = row
+            headings = [h.split('(')[0].strip() for h in row]
             units = re.findall("\(([%\w]*)\)", ' '.join(row))
-            print units
+            if verbose:
+                print "Units:", units
+                print "Headings:", headings
         else:
             if row[0] <> '':
                 chemical_formula = row[0]
@@ -58,20 +63,21 @@ def conver_file(file_name):
             # Young's modulus E (GPa),
             # Fracture strain (%)                
                 
-            phase = AlloyPhase()
-            phase.chemical_formula = chemical_formula
+            alloy = Alloy(
+                ids = chemical_formula, 
+                chemical_formula = chemical_formula) 
 
             properties = []
             for k in range(1,4):
                 prop = Property(name=headings[k])
-                prop.scalar = row[k]
-                prop.unit = units[k-1]
+                prop.scalars = row[k]
+                prop.units = units[k-1]
                 properties.append(prop)
 
-            phase.properties = properties
-            phase.table = {'number':table_no, 'caption':caption}
+            alloy.properties = properties
+            alloy.table = {'number':table_no, 'caption':caption}
 
-            data.append({'labels':[chemical_formula], 'value':phase})
+            data.append({'labels':[chemical_formula], 'value':alloy})
 
     pickle.dump(data, open(output_name, 'w'))
 
