@@ -17,28 +17,28 @@ def conver_file(file_name):
             caption = row[0]
         elif i == 2:
             headings = [h.split('(')[0].strip() for h in row]
-            if verbose:
-                print "Headings:", headings
-        elif i == 3:
-            units = [u.strip(" ()") for u in row]
+            units = get_units(row)
             if verbose:
                 print "Units:", units
-            if row[1] != '':
-                headings[1] += ' ' + row[1]
+                print "Headings:", headings
         else:
             if row[0] <> '':
                 chemical_formula = row[0]
 
             properties = []
-            method = Method(name=row[1])
             for k in range(2,4):
                 prop = Property(name=headings[k])
                 prop.scalars = row[k]
-                prop.method = method
-                prop.table = {'number': table_no, 'caption': caption}
                 properties.append(prop)
 
-            data.append({'labels': [chemical_formula], 'value': properties})
+            alloy = Alloy(
+                    ids = chemical_formula,
+                    chemical_formula = chemical_formula)
+
+            alloy.properties = properties
+            alloy.table = {'number': table_no, 'caption': caption}
+
+            data.append({'labels': [chemical_formula], 'value': alloy})
 
     pickle.dump(data, open(output_name, 'w'))
 

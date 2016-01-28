@@ -17,6 +17,15 @@ else:
 
 verbose = ('-V' in sys.argv)
 
+
+def get_units(row):
+    units = []
+    for c in row:
+        u = re.findall("\(([^)]*)\)", c)
+        units.append(u[0] if u else None)
+    return units
+
+
 def irows(file_name):
     """
     Iterates through file rows

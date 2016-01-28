@@ -24,24 +24,22 @@ def conver_file(file_name):
         else:
             if row[0] <> '':
                 chemical_formula = row[0]
-
-            alloy = Alloy(
-                ids = chemical_formula, 
-                chemical_formula = chemical_formula) 
+            else:
+                continue
 
             properties = []
             for k in range(1,4):
                 prop = Property(name=headings[k])
                 prop.scalars = row[k]
                 prop.units = units[k-1]
+                ### TODO: ????
+                prop.table = {'number': table_no, 'caption': caption}
                 properties.append(prop)
 
-            alloy.properties = properties
-            alloy.table = {'number':table_no, 'caption':caption}
 
-            data.append({'labels':[chemical_formula], 'value':alloy})
+            data.append({'labels': [chemical_formula], 'value': properties})
 
-    pickle.dump(data, open(output_name, 'w'))
+        pickle.dump(data, open(output_name, 'w'))
 
 
 for fn in ifiles():
