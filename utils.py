@@ -26,7 +26,7 @@ def get_units(row):
     return units
 
 
-def irows(file_name):
+def irows(file_name, max_columns=None):
     """
     Iterates through file rows
     """
@@ -35,7 +35,9 @@ def irows(file_name):
         with open(file_name, "rU") as table:
             reader = csv.reader(table)
             for i, row in enumerate(reader):
-                if verbose:
+                if max_columns is not None:
+                    row = row[:max_columns]
+                if verbose and not all([c == '' for c in row]):
                     print i, ":", row
                 yield row
     else:
