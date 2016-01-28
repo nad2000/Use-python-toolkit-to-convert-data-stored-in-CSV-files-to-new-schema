@@ -29,16 +29,10 @@ def conver_file(file_name):
             for k in range(2,4):
                 prop = Property(name=headings[k])
                 prop.scalars = row[k]
+                prop.table = {'number': table_no, 'caption': caption}
                 properties.append(prop)
 
-            alloy = Alloy(
-                    ids = chemical_formula,
-                    chemical_formula = chemical_formula)
-
-            alloy.properties = properties
-            alloy.table = {'number': table_no, 'caption': caption}
-
-            data.append({'labels': [chemical_formula], 'value': alloy})
+            data.append({'labels': [chemical_formula], 'value': properties})
 
     pickle.dump(data, open(output_name, 'w'))
 
