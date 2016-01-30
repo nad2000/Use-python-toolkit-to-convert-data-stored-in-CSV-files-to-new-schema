@@ -1,34 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pickle
-from pypif.obj import *
-import os
-import sys
-
-import csv
-from openpyxl import load_workbook
-
-if len(sys.argv) < 2:
-    root_dir = os.path.join(os.environ["HOME"], "Example")
-else:
-    root_dir = sys.argv[1]
-
-def irows(file_name):
-    """
-    Iterates file rows
-    """
-    _, ext = os.path.splitext(file_name)
-    if ext == '.csv':
-        with open(os.path.join(dir_name, file_name),'rU') as table:
-            reader = csv.reader(table)
-            for row in reader:
-                yield row
-    else:
-        wb = load_workbook(file_name)
-        for row in wb.worksheets[0].iter_rows():
-            yield [str('' if c.value is None else c.value) for c in row]
-
+from utils import *
 
 def conver_file(file_name):
     data = []
@@ -38,43 +11,61 @@ def conver_file(file_name):
     output_name = name + ".p"
 
     for i, row in enumerate(irows(file_name)):
-        print i, ":", row
         if i == 0:
-            img_no = row[0].lower().replace('table','').replace(' ','')
-        elif i == 1:
-            caption = row[0]
-        elif i == 2:
-            for j, column in enumerate(row):
-                headings.append(row[j])
+            header = row
+            if not (header[:5] == ["ID", "Type", "Name", "Value", "Units"]):
+                print "*** Unexpeced header:", header
+            
         else:
-            if row[0] <> '':
-                chemical_formula = row[0]
-            region = row[1]
-            if region == 'A':
-                p = 'Proeutectic'
-            elif region == 'B':
-                p = 'Eutectic'
+            ids, obj_type, name, value, units = row[:5]
+            ids = [id_.strip() for id_ in row[0].split(',')]
+            obj_type = obj_type.lower()
+            properties = []
+            for i in xrange(5, len(row), 3):
+                if row[i] == '':
+                    break
+                properties.append(Property(
+                    name = row[i],
+                    scalars = row[i+1],
+                    units = row[i+2]))
 
-            phase = AlloyPhase()
-            phase.chemical_formula = chemical_formula
+                for id_ in ids:
+                    if obj_type == "alloy":
+                        obj = Alloy(
+                                names = value,
+                                chemical_formula = value,
+                                properties = properties)
 
-            compositions = []
-            for k in range(2,7):
-                comp = Composition()
-                comp.element=headings[k]
-                comp.atomic_percent=row[k]
-                compositions.append(comp)
+                    elif obj_type == "processing":
+                        ## TODO: ???
+                        obj = None
+                        pass
+                    elif obj_type == "propery":
+                        obj = Property(
+                            name = name,
+                            scalars = value,
+                            units = units)
+                    elif obj_type == "reference":
+                        obj = Reference()
+                        if name.lower() == "doi":
+                            obj.doi = value
+                        elif name.lower() == "affiliation":
+                            ## TODO: ????
+                            obj.affiliation = value
 
-            phase.composition = compositions
-            phase.table = {'number':img_no, 'caption':caption}
-            phase.names = [region,p]
+                    elif obj_type == "phase":
+                        obj = AlloyPhase(
+                                names = value,
+                                chemical_formula = value,
+                                properties = properties)
 
-            data.append({'labels':[chemical_formula], 'value':phase})
+                    if obj_type in ["alloy", "phase"]:
+                        obj.properties = properties
+
+                    data.append({'labels':[id_], 'value': obj})
 
     pickle.dump(data, open(output_name, 'w'))
 
-for dir_name, _, file_names in os.walk(root_dir):
-    for file_name in file_names:
-        if file_name.endswith(".csv") or file_name.endswith(".xlsx"):
-            print "***", file_name
-            conver_file(os.path.join(dir_name, file_name))
+for fn in ifiles(files="*.xlsx"):
+    conver_file(fn)
+

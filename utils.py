@@ -6,6 +6,7 @@ from pypif.obj import *
 import os
 import sys
 import re
+from fnmatch import fnmatch
 
 import csv
 from openpyxl import load_workbook
@@ -37,13 +38,16 @@ def irows(file_name, max_columns=None):
             for i, row in enumerate(reader):
                 if max_columns is not None:
                     row = row[:max_columns]
+                row = [v.strip() for v in row]
                 if verbose and not all([c == '' for c in row]):
                     print i, ":", row
                 yield row
     else:
         wb = load_workbook(file_name)
         for i, ws_row in enumerate(wb.worksheets[0].iter_rows()):
-            row = [str('' if c.value is None else c.value) for c in ws_row]
+            row = [str('' if c.value is None else c.value).strip() for c in ws_row]
+            if max_columns is not None:
+                row = row[:max_columns]
             if verbose:
                 print i, ":", row
             yield row
@@ -64,7 +68,9 @@ def ifiles(files=None, root_dir=root_dir):
             if (
                     (file_name.endswith(".csv") or file_name.endswith(".xlsx"))
                     and
-                    (files is None or file_name in files)
+                    (files is None or file_name in files or (
+                        type(files) is str and fnmatch(file_name, files)
+                    ))
                 ):
                 if verbose:
                     print "***", file_name
