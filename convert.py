@@ -41,8 +41,9 @@ def conver_file(file_name):
 
                 elif obj_type == "processing":
                     obj = ProcessStep(
-                            name = value,
-                            details = properties)
+                            details=Value(
+                                name = value,
+                                scalars = properties))
 
                 elif obj_type == "propery":
                     obj = Property(
@@ -56,7 +57,7 @@ def conver_file(file_name):
                         obj.doi = value
                     elif name.lower() == "affiliation":
                         affiliations.append(value)
-                        continue
+                        continue  ## TODO
 
                 elif obj_type == "phase":
                     obj = AlloyPhase(
