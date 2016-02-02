@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from utils import *
+from collections import defaultdict
 
 def conver_file(file_name):
     data = []
@@ -10,8 +11,22 @@ def conver_file(file_name):
     name, ext = os.path.splitext(file_name)
     output_name = name + ".p"
     affiliations = []
+    processes = defaultdict(lambda: [])
 
     rows = list(irows(file_name))
+    all_ids = []
+    # Replace IDs value with the list of IDs 
+    # and collect the full list of all IDs in the doc
+    for row in rows[1:]:
+        # list IDs:
+        ids = [id_.strip() for id_ in row[0].split(',')]
+        row[0] = ids
+        all_ids.extend([id_ for id_ in ids if id_.lower() != "all"])
+    all_ids = set(all_ids)
+
+    if verbose:
+        print "*** IDs in the file:",  all_ids
+
     for i, row in enumerate(rows):
         if i == 0:
             header = row
@@ -20,7 +35,6 @@ def conver_file(file_name):
             
         else:
             ids, obj_type, name, value, units = row[:5]
-            ids = [id_.strip() for id_ in row[0].split(',')]
             obj_type = obj_type.lower()
 
             properties = []
@@ -40,10 +54,15 @@ def conver_file(file_name):
                             properties = properties)
 
                 elif obj_type == "processing":
-                    obj = ProcessStep(
+                    step = ProcessStep(
                             details=Value(
                                 name = value,
                                 scalars = properties))
+                    if id_.lower() == "all":
+                        for id__ in ids:
+                            processes[id__].append(step)
+                    else:
+                        processes[id_].append(step)
 
                 elif obj_type == "propery":
                     obj = Property(
@@ -68,7 +87,12 @@ def conver_file(file_name):
                 if obj_type in ["alloy", "phase"]:
                     obj.properties = properties
 
-                data.append({'labels':[id_], 'value': obj})
+                # "Processing" gets added at the end:
+                if obj_type != "processing":
+                    data.append({'labels':[id_], 'value': obj})
+    # Add "Processing":
+    for id_, steps in processes.items():
+        data.append({'labels':[id_], 'value': steps})
 
     pickle.dump(data, open(output_name, 'w'))
 
