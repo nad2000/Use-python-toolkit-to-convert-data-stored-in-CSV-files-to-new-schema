@@ -3,6 +3,7 @@
 
 import pickle
 from pypif.obj import *
+from pypif import pif
 import os
 import sys
 import re

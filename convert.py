@@ -10,6 +10,7 @@ def conver_file(file_name):
     phases = []
     name, ext = os.path.splitext(file_name)
     output_name = name + ".p"
+    output_json = name + ".json"
     affiliations = []
     processes = defaultdict(lambda: [])
 
@@ -48,35 +49,37 @@ def conver_file(file_name):
 
             for id_ in ids:
                 if obj_type == "alloy":
-                    obj = Alloy(
-                            names = value,
-                            chemical_formula = value,
-                            properties = properties)
+                    obj = Alloy()
+                    if name.lower() == "chemical formula":
+                        obj.chemical_formula = value
 
                 elif obj_type == "processing":
                     step = ProcessStep(
                             details=Value(
-                                name = value,
-                                scalars = properties))
+                                scalars = [Value(
+                                    name='Processing',
+                                    scalars=value)]
+                                    + properties))
                     if id_.lower() == "all":
                         for id__ in ids:
                             processes[id__].append(step)
                     else:
                         processes[id_].append(step)
 
-                elif obj_type == "propery":
+                elif obj_type == "property":
                     obj = Property(
                         name = name,
                         scalars = value,
-                        units = units)
+                        units = units,
+                        conditions = properties)
 
                 elif obj_type == "reference":
                     if name.lower() == "doi":
-                        obj = Reference()
-                        obj.doi = value
-                    elif name.lower() == "affiliation":
+                        obj = Reference(
+                            doi = value)
+                    elif name.lower() == "affiliation" or "institution":
                         affiliations.append(value)
-                        continue  ## TODO
+                        continue
 
                 elif obj_type == "phase":
                     obj = AlloyPhase(
@@ -90,11 +93,15 @@ def conver_file(file_name):
                 # "Processing" gets added at the end:
                 if obj_type != "processing":
                     data.append({'labels':[id_], 'value': obj})
+
     # Add "Processing":
     for id_, steps in processes.items():
         data.append({'labels':[id_], 'value': steps})
 
+    data.append({'labels':['all'], 'value': Reference(affiliation=affiliations)})
     pickle.dump(data, open(output_name, 'w'))
+    pif.dump(data, open(output_json, 'w'),indent=4)
+
 
 for fn in ifiles(files="*.xlsx"):
     conver_file(fn)
