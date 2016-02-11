@@ -51,7 +51,7 @@ def conver_file(file_name):
                 if obj_type == "alloy":
                     obj = Alloy()
                     if name.lower() == "chemical formula":
-                        obj.chemical_formula = value
+                        obj.chemical_formula = utils.map2latex(value)
 
                 elif obj_type == "processing":
                     step = ProcessStep(
@@ -84,7 +84,7 @@ def conver_file(file_name):
                 elif obj_type == "phase":
                     obj = AlloyPhase(
                             names = value,
-                            chemical_formula = value,
+                            chemical_formula = utils.map2latex(value),
                             properties = properties)
 
                 if obj_type in ["alloy", "phase"]:

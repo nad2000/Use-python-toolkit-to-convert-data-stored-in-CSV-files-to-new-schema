@@ -8,6 +8,7 @@ import os
 import sys
 import re
 from fnmatch import fnmatch
+import latex_dict
 
 import csv
 from openpyxl import load_workbook
@@ -19,6 +20,11 @@ else:
 
 verbose = ('-V' in sys.argv)
 
+def map2latex(val):
+    if val is not None and type(val) is unicode:
+        return ''.join((latex_dict.dict.get(c, c) for c in val))
+    else:
+        return val
 
 def get_units(row):
     units = []
